@@ -27,6 +27,14 @@ var transporter = nodemailer.createTransport(smtpTransport({
     }
 }));
 
+var ensureAuthenticated = function (req, res, next) {
+    if (req.isAuthenticated()) {
+        next();
+    } else {
+        res.status(401);
+    }
+};  
+
 //get all applications
 // router.get('/', function(req, res, next) {
 // 	Application.findAll()
@@ -37,7 +45,7 @@ var transporter = nodemailer.createTransport(smtpTransport({
 // })
 
 //get all applications by userId
-router.get('/', function(req, res, next) {
+router.get('/', ensureAuthenticated, function(req, res, next) {
     req.user.getApplications()
         .then(function(allApplications) {
             res.json(allApplications);
@@ -46,7 +54,7 @@ router.get('/', function(req, res, next) {
 });
 
 //get one application
-router.get('/:id', function(req, res, next) {
+router.get('/:id', ensureAuthenticated, function(req, res, next) {
     console.log('i am in the routes');
     Application.findById(req.params.id)
         .then(function(foundApplication) {
@@ -56,7 +64,7 @@ router.get('/:id', function(req, res, next) {
 });
 
 //get bugs for one application
-router.get('/:id/bugs', function(req, res, next) {
+router.get('/:id/bugs', ensureAuthenticated, function(req, res, next) {
     console.log('i am in the bugs route');
     Bug.findAll({
             where: {
@@ -71,7 +79,7 @@ router.get('/:id/bugs', function(req, res, next) {
 });
 
 //get one bug detail for application
-router.get('/:id/bugs/:bugId', function(req, res, next) {
+router.get('/:id/bugs/:bugId', ensureAuthenticated, function(req, res, next) {
     Bug.findById(req.params.bugId)
         .then(function(foundBug) {
             res.json(foundBug);
@@ -80,7 +88,7 @@ router.get('/:id/bugs/:bugId', function(req, res, next) {
 });
 
 //app updates one bug details
-router.put('/:id/bugs/:bugId', function(req, res, next) {
+router.put('/:id/bugs/:bugId', ensureAuthenticated, function(req, res, next) {
     Bug.findById(req.params.bugId)
         .then(function(foundBug) {
             return foundBug.update(req.body);
@@ -91,7 +99,7 @@ router.put('/:id/bugs/:bugId', function(req, res, next) {
         .catch(next);
 });
 //add new application
-router.post('/', function(req, res, next) {
+router.post('/', ensureAuthenticated, function(req, res, next) {
     //var application;
     var id = req.user.id;
     //THIS USER ID NEEDS TO COME FROM SESSION!!!
@@ -109,7 +117,7 @@ router.post('/', function(req, res, next) {
 });
 
 //get all users
-router.get('/:id/users', function(req, res, next) {
+router.get('/:id/users', ensureAuthenticated, function(req, res, next) {
     Application.findById(req.params.id)
         .then(function(foundApp) {
             foundApp.getUsers()
@@ -141,7 +149,7 @@ router.get('/:id/users', function(req, res, next) {
 // });
 
 //add a new user to application
-router.post('/:id/users', function(req, res, next) {
+router.post('/:id/users', ensureAuthenticated, function(req, res, next) {
     var userEmail = req.body.email;
     var level = req.body.accessLevel;
     var findApp = Application.findById(req.params.id);
@@ -188,7 +196,7 @@ router.post('/:id/users', function(req, res, next) {
 });
 
 //getting the access level for a particular app for one user
-router.get('/:id/user', function(req, res, next) {
+router.get('/:id/user', ensureAuthenticated, function(req, res, next) {
     var userID = req.user.id;
     // var findApp = Application.findById(req.params.id);
     // var findUser = User.findById(userID);	
@@ -207,7 +215,7 @@ router.get('/:id/user', function(req, res, next) {
 });
 
 //updating the access level for a particular app for one user
-router.put('/:id/users', function(req, res, next) {
+router.put('/:id/users', ensureAuthenticated, function(req, res, next) {
     var userID = req.body.id;
     var updatedLevel = req.body.appAccess.accessLevel;
     var findApp = Application.findById(req.params.id);
@@ -225,7 +233,7 @@ router.put('/:id/users', function(req, res, next) {
 
 
 //remove user from a particular applicaiton
-router.delete('/:appID/users/:userID', function(req, res, next) {
+router.delete('/:appID/users/:userID', ensureAuthenticated, function(req, res, next) {
     console.log('in the delete route');
     console.log('the req.body.id is: ', req.params.userID);
     var findApp = Application.findById(req.params.appID);
@@ -251,7 +259,7 @@ router.delete('/:appID/users/:userID', function(req, res, next) {
         .catch(next);
 });
 //update an application
-router.put('/:id', function(req, res, next) {
+router.put('/:id', ensureAuthenticated, function(req, res, next) {
     Application.findById(req.params.id)
         .then(function(foundApplication) {
             return foundApplication.update(req.body);
@@ -264,7 +272,7 @@ router.put('/:id', function(req, res, next) {
 
 
 //delete an application
-router.delete('/:id', function(req, res, next) {
+router.delete('/:id', ensureAuthenticated, function(req, res, next) {
     Application.findById(req.params.id)
         .then(function(foundApplication) {
             return foundApplication.destroy()
@@ -275,7 +283,7 @@ router.delete('/:id', function(req, res, next) {
         .catch(next)
 });
 
-router.get('/:id/github', function(req, res, next) {
+router.get('/:id/github', ensureAuthenticated, function(req, res, next) {
     github.authenticate({
         type: "oauth",
         token: localStorage.getItem('accessToken')
@@ -288,7 +296,7 @@ router.get('/:id/github', function(req, res, next) {
     })
 });
 
-router.post('/:id/bugs/add_issue', function(req, res, next) {
+router.post('/:id/bugs/add_issue', ensureAuthenticated, function(req, res, next) {
     var repoName;
     var bugId = req.body.bugId
 
